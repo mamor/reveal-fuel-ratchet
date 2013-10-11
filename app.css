@@ -1,0 +1,44 @@
+pre {
+	box-shadow: 0 0 6px rgba(255,255,255,1) !important;
+	margin: 25px 0px !important;
+}
+
+h1 {
+	font-size: 3.55em !important;
+}
+
+#cover > h2 {
+	margin: 50px;
+}
+
+[id^="section-"] {
+	text-align: left;
+}
+
+[id^="section-"] h3 {
+	margin: 50px 0px 25px !important;
+}
+
+[id^="section-"] .point {
+	color:yellow;
+}
+
+#section-aboutme .icon {
+	float: left;
+	width: 380px;
+	height: 380px;
+	background-image: url(http://madroom.org/assets/img/wolf_transparency.png);
+}
+
+#section-aboutme .icon > img {
+	border: none;
+	background: #111111;
+}
+
+#section-aboutme table tr {
+	line-height: 50px;
+}
+
+#section-aboutme table tr > th {
+	text-align: right;
+}

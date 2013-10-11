@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="description" content="Reveal-fuel-ratchet : &quot;FuelPHP &amp; CodeIgniter ユーザの集い (2013/10/12)&quot; 用資料" />
+	<meta name="author" content="Mamoru Otsuka">
+
+	<link rel="stylesheet" href="reveal/css/reveal.min.css">
+	<link rel="stylesheet" href="reveal/css/theme/night.css">
+	<link rel="stylesheet" href="app.css">
+
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+	<script src="reveal/js/reveal.min.js"></script>
+	<script>
+		$(function() {
+			Reveal.initialize({center:false, history: true});
+		});
+	</script>
+
+	<title>FuelPHP x Ratchet - WebSocket Application</title>
+</head>
+
+<body>
+
+<div class="reveal">
+	<div class="slides">
+
+		<section id="cover">
+			<h1>FuelPHP x Ratchet</h1>
+			<h2>- WebSocket Application -</h2>
+			<p>FuelPHP & CodeIgniter ユーザの集い on October 1, 2013</p>
+			<p>Mamoru Otsuka (<a target="_blank" href="https://twitter.com/madmamor">@madmamor</a>)</p>
+		</section>
+
+		<section id="section-outline">
+			<h2>Outline</h2>
+			<ol>
+				<li><a href="#/section-aboutme">About Me</a></li>
+				<li><a href="#/section-websocket">WebSocketとは</a></li>
+				<li><a href="#/section-wamp">WAMPとは</a></li>
+				<li><a href="#/section-problem">WebSocket開発のハードル</a></li>
+				<li><a href="#/section-ratchet">Ratchetとは</a></li>
+				<li><a href="#/section-fuelphp">FuelPHPでRatchetを使うには</a></li>
+				<li><a href="#/section-sample">サンプル</a></li>
+				<li><a href="#/section-demo">DEMOサイト</a></li>
+				<li><a href="#/section-production">商用環境ですべきこと</a></li>
+			</ol>
+		</section>
+
+		<section id="section-aboutme">
+			<h2>About Me</h2>
+			<div>
+				<div class="icon"></div>
+				<table>
+					<tr>
+						<th>Name :</th>
+						<td>Mamoru Otsuka</td>
+					</tr>
+					<tr>
+						<th>WEB :</th>
+						<td><a target="_blank" href="http://madroom.net/">http://madroom.net/</a></td>
+					</tr>
+						<th>Twitter :</th>
+						<td><a target="_blank" href="https://twitter.com/madmamor">@madmamor</a></td>
+					</tr>
+					<tr>
+						<th>Blog :</th>
+						<td><a target="_blank" href="http://madroom-project.blogspot.jp/">madroom project</a></td>
+					</tr>
+					<tr>
+						<th>GitHub :</th>
+						<td><a target="_blank" href="https://github.com/mp-php">@mp-php</a></td>
+					</tr>
+					<tr>
+						<th>GitHub (Android) :</th>
+						<td><a target="_blank" href="https://github.com/mp-android">@mp-android</a></td>
+					</tr>
+					<tr>
+						<th>Android Apps :</th>
+						<td><a target="_blank" href="https://play.google.com/store/apps/developer?id=madroom+project">madroom project</a></td>
+					</tr>
+					<tr>
+						<th>Location :</th>
+						<td>Tama-Center, Roppongi</td>
+					</tr>
+				</table>
+			</div>
+		</section>
+
+		<section id="section-websocket">
+			<h2>WebSocketとは</h2>
+			<p class="fragment">
+				双方向通信を可能にする、ネットワーク用の通信規格</br>
+				XMLHttpRequest(Ajax)の欠点を解決する技術として開発されている<br />
+				<a target="_blank" href="http://ja.wikipedia.org/wiki/WebSocket">http://ja.wikipedia.org/wiki/WebSocket</a>
+			</p>
+
+			<h3 class="fragment">Ajaxで双方向通信っぽいことを行おうとすると</h3>
+			<ul>
+				<li class="fragment">
+					<p>一定間隔でサーバにリクエスト(ポーリング)</p>
+					<p class="fragment">→通信毎にコネクションを確立する</p>
+					<p class="fragment point" data-fragment-index="100">→WebSocketなら同じコネクションで何度も通信</p>
+					<p class="fragment">→若干のラグが発生</p>
+					<p class="fragment point" data-fragment-index="101">→WebSocketなら即時</p>
+				</li>
+				<li class="fragment">
+					<p>レスポンスをわざと遅らせて擬似的にプッシュ(Comet)</p>
+					<p class="fragment">→HTTPの接続が長引きサーバの負担となる</p>
+					<p class="fragment point" data-fragment-index="102">→WebSocketなら専用プロトコルでコネクションを維持してサーバの負担を軽減できる</p>
+				</li>
+			</ul>
+		</section>
+
+		<section id="section-wamp">
+			<h2>WAMPとは</h2>
+			<ul class="fragment">
+				<li>WebSocket Application Messaging Protocolの略</li>
+				<li>WebSocketのサブプロトコル</li>
+				<li><a target="_blank" href="http://wamp.ws/">http://wamp.ws/</a></li>
+				<li class="fragment point">PubSubとRPCの提供</li>
+			</ul>
+			<h3 class="fragment">PubSubとは</h3>
+			<ul class="fragment">
+				<li><a target="_blank" href="http://ja.wikipedia.org/wiki/%E5%87%BA%E7%89%88-%E8%B3%BC%E8%AA%AD%E5%9E%8B%E3%83%A2%E3%83%87%E3%83%AB">出版-購読型モデル</a></li>
+				<li class="fragment">疎結合なメッセージングパターン</li>
+			</ul>
+			<h3 class="fragment">RPCとは</h3>
+			<ul class="fragment">
+				<li>Remote Procedure Callの略</li>
+				<li class="fragment">遠隔地(Remote)の一連の処理(Procedure)を呼び出す(Call)</li>
+				<li class="fragment">例: チャットルームのメンバ一覧を取得(パラメータはルームID)</li>
+			</ul>
+		</section>
+
+		<section id="section-problem">
+			<h2>WebSocket開発のハードル</h2>
+			<h3 class="fragment">PHPでの開発を主としていると</h3>
+			<ul>
+				<li>
+					<p class="fragment">Node.js + Socket.IOやPlay Frameworkで開発しようとすると</p>
+					<p class="fragment point">→WebSocket以外の学習コスト</p>
+					<p class="fragment point">→使用言語変更のリスク(業務)</p>
+				</li>
+			</ul>
+			<h3 class="fragment">Node.js + Socket.IOやPlay FrameworkをPHPと組み合わせようとすると</h3>
+			<ul>
+				<li>
+					<p class="fragment">セッションの共有が困難</p>
+					<p class="fragment point">
+						→双方の暗号化/復号化ルーチンを統一する必要がある<br />
+						<a target="_blank" href="http://fuelphp.com/forums/discussion/comment/13149">http://fuelphp.com/forums/discussion/comment/13149</a><br />
+						(FuelPHPでなくても、同じ問題は出てくると思われる)
+					</p>
+				</li>
+			</ul>
+		</section>
+
+		<section id="section-ratchet">
+			<h2>Ratchetとは</h2>
+			<ul class="fragment">
+				<li><a target="_blank" href="http://socketo.me/">http://socketo.me/</a></li>
+				<li>PHP製のWebSocketライブラリ</li>
+				<li>WAMP対応</li>
+				<li>単体で使用可能</li>
+				<li class="fragment point">フレームワークに組み込むことも可能</li>
+			</ul>
+			<h3 class="fragment">フレームワークに組み込むと</h3>
+			<ul class="fragment">
+				<li class="point">フレームワークの機能(クラス/メソッド)が使える</li>
+				<li class="point">セッションの共有も比較的容易</li>
+			</ul>
+			<div class="fragment">
+				<h3>FuelPHPに組み込んでみました(Package化)</h3>
+				<p class="point">以降「Ratchetパッケージ」と呼びます</p>
+			</div>
+		</section>
+
+		<section id="section-fuelphp">
+			<section>
+				<h2>FuelPHPでRatchetを使うには</h2>
+				<div class="fragment">
+					<h3>ZeroMQのインストール</h3>
+					<ul class="fragment">
+						<li><a target="_blank" href="http://zeromq.org/">http://zeromq.org/</a></li>
+						<li>メッセージングライブラリ</li>
+						<li>Ratchetを動かすだけなら必須ではない</li>
+						<li>Ratchetパッケージでは必須</li>
+						<li>FuelPHPのTask等からメッセージを送信する際に使用</li>
+						<li>各OSへのインストール方法
+							<a target="_blank" href="http://madroom-project.blogspot.jp/2013/04/mampmaczeromq.html">Mac</a> /
+							<a target="_blank" href="http://madroom-project.blogspot.jp/2013/04/ubuntu-phpzeromq.html">Linux </a> /
+							<a target="_blank" href="http://madroom-project.blogspot.jp/2013/04/xamppwindowszeromq.html">Windows</a>
+						</li>
+					</ul>
+				</div>
+				<div class="fragment">
+					<h3>Ratchetパッケージのインストール</h3>
+					<ul class="fragment">
+						<li><a target="_blank" href="https://github.com/mp-php/fuel-packages-ratchet#install">https://github.com/mp-php/fuel-packages-ratchet#install</a></li>
+					</ul>
+				</div>
+			</section>
+
+			<section>
+				<h3>Mac(MAMP)ZeroMQのインストール 1/2</h3>
+				<h4>libzmqのインストール</h4>
+				<pre><code>
+					# ダウンロード
+					$ cd xxx # 任意のディレクトリ
+					$ git clone git://github.com/zeromq/libzmq.git
+
+					# インストール
+					$ cd libzmq/
+					$ sudo ./autogen.sh
+					$ ./configure
+					$ make
+					$ sudo make install
+				</code></pre>
+				<p>libtoolやautoconfのnot foundエラーが出たら、以下の手順等でインストールして下さい。</p>
+				<ol>
+					<li>XcodeのGUIからCommand Line Toolsをインストール</li>
+					<li>Mac Portsからlibtool、autoconf、automakeをインストール</li>
+				</ol>
+			</section>
+			<section>
+				<h3>Mac(MAMP)ZeroMQのインストール 2/2</h3>
+				<h4>php-zmqのインストール</h4>
+				<pre><code>
+					# php.hのエラーを回避するため、公式からPHPをDL
+					$ cd xxx # 任意のディレクトリ
+					$ wget http://www.php.net/get/php-5.4.20.tar.bz2/from/jp1.php.net/mirror -O php-5.4.20.tar.bz2
+					$ tar zxf php-5.4.20.tar.bz2
+					$ cd php-5.4.20
+					$ ./configure
+					$ cd ../
+					$ mkdir /Applications/MAMP/bin/php/php5.4.4/include
+					$ mv php-5.4.20 /Applications/MAMP/bin/php/php5.4.4/include/php
+
+					# php-zmqのインストール
+					$ cd xxx # 任意のディレクトリ
+					$ git clone git://github.com/mkoppanen/php-zmq.git
+					$ cd php-zmq/
+					$ phpize
+					$ ./configure # エラーが出たので、Mac Portsでre2cとpkgconfigのバージョンを最新にしました。
+					$ make
+					$ sudo make install
+				</code></pre>
+				<h4>php.iniの編集</h4>
+				<pre><code>
+					# 以下を追記する。"php -i | grep 'Configuration File'" で表示されるphp.iniも忘れずに。
+					extension=zmq.so
+				</code></pre>
+			</section>
+			<section>
+				<h3>Linux(Ubuntu)にZeroMQをインストール</h3>
+				<h4>libzmqとphp-zmq(とpaco)のインストール</h4>
+				<pre><code>
+					$ sudo apt-get install -y libzmq-dev paco
+					$ cd xxx # 任意のディレクトリ
+					$ git clone git://github.com/mkoppanen/php-zmq.git
+					$ cd php-zmq/
+					$ phpize
+					$ ./configure
+					$ make
+					$ sudo paco -D make install
+				</code></pre>
+				<h4>php.iniの編集はMacと同様</h4>
+			</section>
+			<section>
+				<h3>Windows(XAMPP)にZeroMQをインストール</h3>
+				<h4>DLLのインストール</h4>
+				<ul>
+					<li><a target="_blank" href="https://github.com/mkoppanen/php-zmq/wiki">https://github.com/mkoppanen/php-zmq/wiki</a> からダウンロード</li>
+					<li>deps/zeromq-3.2.2/libzmq.dll を xampp/php/ 下にコピー</li>
+					<li>php-zmq/[php53|php54]/*/php_zmq.dllを xampp/php/ext/ 下にコピー</li>
+				</ul>
+				<h4 style="margin-top: 25px;">php.iniの編集</h4>
+				<pre><code>
+					# 以下を追記する。"php -i | grep 'Configuration File'" で表示されるphp.iniも忘れずに。
+					extension=php_zmq.dll
+				</code></pre>
+			</section>
+			<section>
+				<h3>Ratchetパッケージのインストール</h3>
+				<h4>インストール</h4>
+				<pre><code>
+					# composer.jsonに以下を追記
+					"mp-php/fuel-packages-ratchet": "dev-master"
+
+					# インストール
+					$ php composer.phar install # 二回目以降はupdate
+				</code></pre>
+				app/config/config.php でRatchetパッケージを有効化
+				<pre><code>
+					'always_load' => array('packages' => array(
+						'ratchet',
+						...
+				</code></pre>
+				packages/ratchet/config/ratchet.php を app/config/ 下にコピー<br />
+				<pre><code>
+					# HELPの表示
+					$ php oil r ratchet:help
+				</code></pre>
+			</section>
+		</section>
+
+		<section id="section-sample">
+			<h2>サンプル</h2>
+			<h3>ファイルの作成</h3>
+			<ul>
+				<li>WebSocketサーバクラスの作成 (<a target="_blank" href="./sample/ws.php">app/classes/my/ratchet/ws.php</a>)</li>
+				<li>クライアント(HTML)の作成 (<a target="_blank" href="./sample/ws.html">public/ws.html</a>)</li>
+			</ul>
+			<h3>起動</h3>
+			<pre><code>
+				$ php oil r ratchet:ws My_Ratchet_Ws 1337
+			</code></pre>
+		</section>
+
+		<section id="section-demo">
+			<h2>DEMOサイト</h2>
+			<ul class="fragment">
+				<li><a target="_blank" href="http://fuelratchet.madroom.org/">http://fuelratchet.madroom.org/</a></li>
+				<li><a target="_blank" href="http://fuelratchet.madroom.org/ratchet/ws/chat/join">FuelPHPのSessionクラスを用いたチャットルーム</a></li>
+				<li><a target="_blank" href="http://fuelratchet.madroom.org/ratchet/wamp/api">WAMPの確認</a></li>
+			</ul>
+			<div class="fragment">
+				<h3>DEMOサイトの元ソース</h3>
+				<a target="_blank" href="https://github.com/mp-php/fuel-ratchet-samples">https://github.com/mp-php/fuel-ratchet-samples</a>
+			</div>
+			<div class="fragment">
+				<h3>Androidアプリ(クライアント)のサンプル</h3>
+				<a target="_blank" href="https://github.com/mp-php/android-wamp-sample">https://github.com/mp-php/android-wamp-sample</a>
+			</div>
+		</section>
+
+		<section id="section-production">
+			<h2>商用環境ですべきこと</h2>
+			<ul>
+				<li class="fragment">
+					<p>
+						<a target="_blank" href="http://socketo.me/docs/deploy">Ratchet公式ドキュメント</a>
+					</p>
+				</li>
+				<li class="fragment">
+					<p>
+						<a target="_blank" href="http://socketo.me/docs/deploy#libevent">Libeventのインストール</a><br />
+						→パフォーマンスの向上
+					</p>
+				</li>
+				<li class="fragment">
+					<p>
+						<a target="_blank" href="http://socketo.me/docs/deploy#serverconfiguration">リバースプロキシの設定 (HAProxy or Varnish or Nginx)</a><br />
+						→ポート番号の隠蔽
+					</p>
+				</li>
+				<li class="fragment">
+					<p>
+						<a target="_blank" href="http://socketo.me/docs/deploy#supervisor">プロセスの永続化 (Supervisor)</a>
+					</p>
+				</li>
+				<li class="fragment">
+					<p>
+						<a target="_blank" href="http://madroom-project.blogspot.jp/2013/06/fuelphpwebsocket.html">FuelPHPとWebSocketの記事まとめ</a></p>
+					</p>
+				</li>
+			</ul>
+		</section>
+
+		<section id="section-end">
+			<h2>ご清聴ありがとうございました。</h2>
+		</section>
+
+	</div>
+</div>
+
+</body>
+</html>
