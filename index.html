@@ -101,14 +101,14 @@
 				<li class="fragment">
 					<p>一定間隔でサーバにリクエスト(ポーリング)</p>
 					<p class="fragment">→通信毎にコネクションを確立する</p>
-					<p class="fragment point" data-fragment-index="100">→WebSocketなら同じコネクションで何度も通信</p>
+					<p class="fragment point">→WebSocketなら同じコネクションで何度も通信</p>
 					<p class="fragment">→若干のラグが発生</p>
-					<p class="fragment point" data-fragment-index="101">→WebSocketなら即時</p>
+					<p class="fragment point">→WebSocketなら即時</p>
 				</li>
 				<li class="fragment">
 					<p>レスポンスをわざと遅らせて擬似的にプッシュ(Comet)</p>
 					<p class="fragment">→HTTPの接続が長引きサーバの負担となる</p>
-					<p class="fragment point" data-fragment-index="102">→WebSocketなら専用プロトコルでコネクションを維持してサーバの負担を軽減できる</p>
+					<p class="fragment point">→WebSocketなら専用プロトコルでコネクションを維持してサーバの負担を軽減できる</p>
 				</li>
 			</ul>
 		</section>
